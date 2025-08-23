@@ -4,6 +4,7 @@ import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Event } from './events/event.entity'
 import { EventsModule } from './events/events.module'
+import { Ticket } from './events/tickets.entity';
 
 @Module({
   imports: [
@@ -15,7 +16,8 @@ import { EventsModule } from './events/events.module'
       password: 'postgres',
       database: 'sebastian',
       entities: [
-        Event
+        Event,
+        Ticket,
       ],
       synchronize: false,
     }),
