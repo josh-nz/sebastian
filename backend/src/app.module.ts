@@ -15,6 +15,7 @@ import { Ticket } from './events/tickets.entity';
       username: 'postgres',
       password: 'postgres',
       database: 'sebastian',
+      logging: true,
       entities: [
         Event,
         Ticket,
