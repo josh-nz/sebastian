@@ -15,7 +15,9 @@ export class EventsService {
   ) {}
 
   findAll(): Promise<Event[]> {
-    return this.eventsRepository.find();
+    return this.eventsRepository.find({
+      order: { date: "DESC" }
+    });
   }
 
   findOne(id: string) {
