@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Event } from './event.entity';
+import { CreateEventDto } from './event.new.dto';
 
 @Injectable()
 export class EventsService {
@@ -17,5 +18,16 @@ export class EventsService {
 
   findOne(id: string): Promise<Event | null> {
     return this.eventsRepository.findOneBy({ id });
+  }
+
+  async create(dto: CreateEventDto): Promise<string> {
+    const newEvent = this.eventsRepository.create({
+      name: dto.name,
+      date: dto.date,
+      capacity: dto.capacity
+    });
+
+    const event = await this.eventsRepository.save(newEvent);
+    return event.id;
   }
 }

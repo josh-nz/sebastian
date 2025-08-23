@@ -1,6 +1,7 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { EventsService } from './events.service';
 import { Event } from './event.entity'
+import { CreateEventDto } from './event.new.dto';
 
 @Controller("events")
 export class EventsController {
@@ -14,5 +15,12 @@ export class EventsController {
   @Get(":id")
   async getEvent(@Param() params: any): Promise<Event | null> {
     return await this.eventsService.findOne(params.id);
+  }
+
+  @Post()
+  async createEvent(@Body() dto: CreateEventDto): Promise<{ id: string}> {
+    return {
+      id: await this.eventsService.create(dto)
+    };
   }
 }
