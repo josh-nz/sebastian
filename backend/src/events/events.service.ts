@@ -73,4 +73,35 @@ export class EventsService {
       return event.id;
     });
   }
+
+  async reserveTickets(userId: string, eventId: string, numberOfTickets: number): Promise<[{ id: string }]> {
+    const [tickets] = await this.dataSource.query<[[{ id: string }], number]>(
+      `--begin;
+       
+       with available_tickets as materialized (
+         select id
+         from tickets
+         where event_id = $2
+           and (ticket_status_id = 1 or (ticket_status_id = 2 and reservation_expires_at < now()))
+         order by ticket_number
+         limit $3
+         for update -- may want to add 'skip locked' for a slightly more optimistic approach with less lock contention at the possibility of the optimistic approach failing when it may have otherwise succeeded if it had waited on the lock.
+         --for no key update skip locked. Unsure if this is safe to use.
+       )
+       update tickets
+       set ticket_status_id = 2,
+         reserved_by_user_id = $1,
+         reservation_expires_at = now() + interval '10 mins'
+       from available_tickets
+       where available_tickets.id = tickets.id
+         and (select count(id) from available_tickets) = $3
+       returning tickets.id
+
+       --commit;
+      `,
+      [userId, eventId, numberOfTickets]
+    );
+
+    return tickets;
+  }
 }
