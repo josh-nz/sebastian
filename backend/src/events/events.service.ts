@@ -25,8 +25,9 @@ export class EventsService {
       `select e.name, e.date, count(e.id) as tickets_left
        from events e
        join tickets t on t.event_id = e.id
+       left join reservations r on r.id = t.reservation_id
        where e.id = $1
-        and (t.ticket_status_id = 1 or (t.ticket_status_id = 2 and t.reservation_expires_at < now()))
+        and (t.ticket_status_id = 1 or (t.ticket_status_id = 2 and r.expires_at < now()))
        group by e.id, e.name, e.date;
       `,
       [id]);
@@ -74,34 +75,46 @@ export class EventsService {
     });
   }
 
-  async reserveTickets(userId: string, eventId: string, numberOfTickets: number): Promise<[{ id: string }]> {
-    const [tickets] = await this.dataSource.query<[[{ id: string }], number]>(
+  async reserveTickets(userId: string, eventId: string, numberOfTickets: number): Promise<{ reservation_id: string } | undefined> {
+    // Out of scope: Possibly prevent a user from making a new reservation while they still have a pending one. A user could tie up all the
+    // tickets with temporary reservations by making multiple POSTs. Ie, same user concurrency can be improved.
+    const [reservation] = await this.dataSource.query<[{ reservation_id: string }]>(
       `--begin;
        
        with available_tickets as materialized (
-         select id
-         from tickets
-         where event_id = $2
-           and (ticket_status_id = 1 or (ticket_status_id = 2 and reservation_expires_at < now()))
-         order by ticket_number
+         select t.id
+         from tickets t
+         left join reservations r on r.id = t.reservation_id
+         where t.event_id = $2
+           and (t.ticket_status_id = 1 or (t.ticket_status_id = 2 and r.expires_at < now()))
+         order by t.ticket_number
          limit $3
-         for update -- may want to add 'skip locked' for a slightly more optimistic approach with less lock contention at the possibility of the optimistic approach failing when it may have otherwise succeeded if it had waited on the lock.
-         --for no key update skip locked. Unsure if this is safe to use.
+         for update of t -- may want to add 'skip locked' for a slightly more optimistic approach with less lock contention at the possibility of the optimistic approach failing when it may have otherwise succeeded if it had waited on the lock.
+         --for no key update of t [skip locked]. Unsure if this weaker lock is safe to use.
+       ),
+       make_reservation as (
+         insert into reservations (user_id, expires_at)
+         select $1, now() + interval '10 mins'
+         where (select count(id) from available_tickets) = $3
+         returning id
+       ),
+       update_tickets as (
+         update tickets
+         set ticket_status_id = 2,
+           reservation_id = make_reservation.id
+         from available_tickets, make_reservation
+         where available_tickets.id = tickets.id
+           and (select count(id) from available_tickets) = $3
+         returning make_reservation.id
        )
-       update tickets
-       set ticket_status_id = 2,
-         reserved_by_user_id = $1,
-         reservation_expires_at = now() + interval '10 mins'
-       from available_tickets
-       where available_tickets.id = tickets.id
-         and (select count(id) from available_tickets) = $3
-       returning tickets.id
+       select id as reservation_id
+       from make_reservation;
 
        --commit;
       `,
       [userId, eventId, numberOfTickets]
     );
 
-    return tickets;
+    return reservation;
   }
 }

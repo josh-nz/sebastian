@@ -20,21 +20,20 @@ create table ticket_statuses (
   status text not null
 );
 
+create table reservations (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid not null references users,
+  expires_at timestamp not null
+);
+
 create table tickets (
   id uuid default gen_random_uuid() primary key,
   event_id uuid not null references events,
   ticket_number int not null,
   ticket_status_id int not null references ticket_statuses,
-  reserved_by_user_id uuid references users,
-  reservation_expires_at timestamp
+  reservation_id uuid references reservations
 );
 
-create table reservations (
-  id uuid default gen_random_uuid() primary key,
-  user_id uuid not null references users,
-  ticket_id uuid not null references tickets,
-  expires_at timestamp not null
-);
 
 insert into ticket_statuses (id, status)
 values (1, 'available'), (2, 'reserved'), (3, 'booked');

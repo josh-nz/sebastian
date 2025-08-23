@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Headers } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Headers, HttpException, HttpStatus } from '@nestjs/common';
 import { EventsService } from './events.service';
 import { Event } from './event.entity'
 import { CreateEventDto } from './dto/create-event.dto';
@@ -26,13 +26,18 @@ export class EventsController {
   }
 
   @Post(":id")
-  async reserveTickets(@Headers("x-user-id") userId: string | undefined, @Param() params: any, @Body() dto: ReserveTicketsDto) {
+  async reserveTickets(@Headers("x-user-id") userId: string | undefined, @Param() params: any, @Body() dto: ReserveTicketsDto): Promise<{ reservation_id: string }> {
+    // Simulating an authenticated user.
     // userId would come from a secure cookie or JWT bearer token after authentication.
+    // Authentication would typically be handled by middleware.
     if (userId === undefined) {
-      throw new Error("Assertion failure: Header `x-user-id` is blank or undefined.");
+      throw new Error("Assertion failure: Header `x-user-id` is blank or undefined. User not authenticated.");
     }
 
-    this.eventsService.reserveTickets(userId, params.id, dto.numberOfTickets);
-    // return `reserved ${dto.numberOfTickets} tickets for show ${params.id} for user ${userId}`;
+    const reservation = await this.eventsService.reserveTickets(userId, params.id, dto.numberOfTickets);
+    if (reservation === undefined) {
+      throw new HttpException("Reservation failed, insufficient tickets available", HttpStatus.UNPROCESSABLE_ENTITY);
+    }
+    return reservation;
   }
 }
