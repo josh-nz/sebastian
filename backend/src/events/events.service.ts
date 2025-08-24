@@ -14,14 +14,24 @@ export class EventsService {
     private dataSource: DataSource
   ) {}
 
-  findAll(): Promise<Event[]> {
-    return this.eventsRepository.find({
+  async findEvents(): Promise<Event[]> {
+    return await this.eventsRepository.find({
       order: { date: "DESC" }
     });
   }
 
-  findOne(id: string) {
-    return this.dataSource.query(
+  async findEvent(eventId: string): Promise<any | undefined> {
+    // This query will want revisiting as the application grows. Counting the available
+    // tickets each time has a performance and contention cost. And if we want to include
+    // the available ticket count on the list of events page, that will incur an even 
+    // bigger performance and contention cost (counting N tickets for M events for each
+    // event list request).
+    // Business decisions around how up-to-date the list of available tickets should be
+    // along with the system's performance will inform a better implementation when needs
+    // arise. 
+
+    // TODO: Type the query results.
+    const [event] = await this.dataSource.query(
       `select e.name, e.date, count(e.id) as tickets_left
        from events e
        join tickets t on t.event_id = e.id
@@ -30,7 +40,9 @@ export class EventsService {
         and (t.ticket_status_id = 1 or (t.ticket_status_id = 2 and r.expires_at < now()))
        group by e.id, e.name, e.date;
       `,
-      [id]);
+      [eventId]);
+
+    return event
   }
 
   async create(dto: CreateEventDto): Promise<string> {
@@ -75,13 +87,11 @@ export class EventsService {
     });
   }
 
-  async reserveTickets(userId: string, eventId: string, numberOfTickets: number): Promise<{ reservation_id: string } | undefined> {
+  async reserveTickets(userId: string, eventId: string, numberOfTickets: number): Promise<{ reservationId: string } | undefined> {
     // Out of scope: Possibly prevent a user from making a new reservation while they still have a pending one. A user could tie up all the
     // tickets with temporary reservations by making multiple POSTs. Ie, same user concurrency can be improved.
-    const [reservation] = await this.dataSource.query<[{ reservation_id: string }]>(
-      `--begin;
-       
-       with available_tickets as materialized (
+    const [reservation] = await this.dataSource.query<[{ reservationId: string }]>(
+      `with available_tickets as materialized (
          select t.id
          from tickets t
          left join reservations r on r.id = t.reservation_id
@@ -90,7 +100,6 @@ export class EventsService {
          order by t.ticket_number
          limit $3
          for update of t -- may want to add 'skip locked' for a slightly more optimistic approach with less lock contention at the possibility of the optimistic approach failing when it may have otherwise succeeded if it had waited on the lock.
-         --for no key update of t [skip locked]. Unsure if this weaker lock is safe to use.
        ),
        make_reservation as (
          insert into reservations (user_id, expires_at)
@@ -109,8 +118,6 @@ export class EventsService {
        )
        select id as reservation_id
        from make_reservation;
-
-       --commit;
       `,
       [userId, eventId, numberOfTickets]
     );

@@ -11,23 +11,28 @@ export class EventsController {
 
   @Get()
   async getEvents(): Promise<Event[]> {
-    return await this.eventsService.findAll();
+    return await this.eventsService.findEvents();
   }
 
-  @Get(":id")
-  async getEvent(@Param() params: any): Promise<Event | null> {
-    return await this.eventsService.findOne(params.id);
+  @Get(":eventId")
+  async getEvent(@Param() params: any): Promise<any> {
+    const event = await this.eventsService.findEvent(params.eventId);
+    if (event === undefined) {
+      throw new HttpException("Event not found.", HttpStatus.NOT_FOUND);
+    }
+
+    return event;
   }
 
   @Post()
-  async createEvent(@Body() dto: CreateEventDto): Promise<{ id: string}> {
+  async createEvent(@Body() dto: CreateEventDto): Promise<{ eventId: string }> {
     return {
-      id: await this.eventsService.create(dto)
+      eventId: await this.eventsService.create(dto)
     };
   }
 
-  @Post(":id/reserve")
-  async reserveTickets(@Headers("x-user-id") userId: string | undefined, @Param() params: any, @Body() dto: ReserveTicketsDto): Promise<{ reservation_id: string }> {
+  @Post(":eventId/reserve")
+  async reserveTickets(@Headers("x-user-id") userId: string | undefined, @Param() params: any, @Body() dto: ReserveTicketsDto): Promise<{ reservationId: string }> {
     // Simulating an authenticated user.
     // userId would come from a secure cookie or JWT bearer token after authentication.
     // Authentication would typically be handled by middleware.
@@ -35,10 +40,11 @@ export class EventsController {
       throw new Error("Assertion failure: Header `x-user-id` is blank or undefined. User not authenticated.");
     }
 
-    const reservation = await this.eventsService.reserveTickets(userId, params.id, dto.numberOfTickets);
+    const reservation = await this.eventsService.reserveTickets(userId, params.eventId, dto.numberOfTickets);
     if (reservation === undefined) {
-      throw new HttpException("Reservation failed, insufficient tickets available", HttpStatus.UNPROCESSABLE_ENTITY);
+      throw new HttpException("Reservation failed, insufficient tickets available.", HttpStatus.UNPROCESSABLE_ENTITY);
     }
+
     return reservation;
   }
 
