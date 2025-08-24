@@ -4,3 +4,9 @@ export interface IListableEvent {
   date: Date;
   capacity: number;
 }
+
+export interface IViewableEvent {
+  name: string;
+  date: Date;
+  availableTicketsCount: number;
+}
