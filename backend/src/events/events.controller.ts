@@ -4,6 +4,7 @@ import { Event } from './event.entity'
 import { CreateEventDto } from './dto/create-event.dto';
 import { ReserveTicketsDto } from './dto/reserve-tickets.dto';
 import { PaymentWebhookDto } from './dto/payment-webhook.dto';
+import { ViewEventDto } from './dto/view-event.dto';
 
 @Controller("events")
 export class EventsController {
@@ -15,7 +16,7 @@ export class EventsController {
   }
 
   @Get(":eventId")
-  async getEvent(@Param() params: any): Promise<any> {
+  async getEvent(@Param() params: any): Promise<ViewEventDto> {
     const event = await this.eventsService.findEvent(params.eventId);
     if (event === undefined) {
       throw new HttpException("Event not found.", HttpStatus.NOT_FOUND);

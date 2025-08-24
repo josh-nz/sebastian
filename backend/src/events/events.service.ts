@@ -5,6 +5,7 @@ import { DataSource, Repository } from 'typeorm';
 import { Event } from './event.entity';
 import { CreateEventDto } from './dto/create-event.dto';
 import { Ticket } from './tickets.entity';
+import { ViewEventDto } from './dto/view-event.dto';
 
 @Injectable()
 export class EventsService {
@@ -20,7 +21,7 @@ export class EventsService {
     });
   }
 
-  async findEvent(eventId: string): Promise<any | undefined> {
+  async findEvent(eventId: string): Promise<ViewEventDto | undefined> {
     // This query will want revisiting as the application grows. Counting the available
     // tickets each time has a performance and contention cost. And if we want to include
     // the available ticket count on the list of events page, that will incur an even 
@@ -28,11 +29,10 @@ export class EventsService {
     // event list request).
     // Business decisions around how up-to-date the list of available tickets should be
     // along with the system's performance will inform a better implementation when needs
-    // arise. 
+    // arise.
 
-    // TODO: Type the query results.
-    const [event] = await this.dataSource.query(
-      `select e.name, e.date, count(e.id) as tickets_left
+    const [event] = await this.dataSource.query<any[]>(
+      `select e.name, e.date, count(e.id) as "availableTicketsCount"
        from events e
        join tickets t on t.event_id = e.id
        left join reservations r on r.id = t.reservation_id
@@ -42,7 +42,13 @@ export class EventsService {
       `,
       [eventId]);
 
-    return event
+    return event ? 
+      {
+        name: event.name,
+        date: new Date(event.date),
+        availableTicketsCount: parseInt(event.availableTicketsCount, 10)
+      }
+      : undefined;
   }
 
   async create(dto: CreateEventDto): Promise<string> {
