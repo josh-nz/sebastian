@@ -3,6 +3,7 @@ import { EventsService } from './events.service';
 import { Event } from './event.entity'
 import { CreateEventDto } from './dto/create-event.dto';
 import { ReserveTicketsDto } from './dto/reserve-tickets.dto';
+import { PaymentWebhookDto } from './dto/payment-webhook.dto';
 
 @Controller("events")
 export class EventsController {
@@ -39,5 +40,15 @@ export class EventsController {
       throw new HttpException("Reservation failed, insufficient tickets available", HttpStatus.UNPROCESSABLE_ENTITY);
     }
     return reservation;
+  }
+
+  @Post("payment_webhook")
+  async paymentProcessorWebhookCallback(@Body() dto: PaymentWebhookDto) {
+    const success = await this.eventsService.process_payment(dto.reservationId, dto.paymentStatus);
+    if (success) {
+      return;
+    }
+    
+    throw new HttpException("An error occurred during payment processing.", HttpStatus.UNPROCESSABLE_ENTITY)
   }
 }

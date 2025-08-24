@@ -117,4 +117,41 @@ export class EventsService {
 
     return reservation;
   }
+
+  async process_payment(reservationId: string, paymentStatus: PaymentStatus): Promise<boolean> {
+    // A pseudo webhook callback from a payment processor. Ordinarily you would want to
+    // add a status to the reservation (eg payment in progress) and remove the reservation
+    // expiry or check the reservation status during ticket reservation so these tickets are not 
+    // allocated to someone else during payment processing.
+    // These changes to the reservation table would happen when the user enters the payment details
+    // step, and can see and review the now locked state of their order. Upon callback from the
+    // payment processor, the system can create an order if payment is approved or do something else
+    // if not, such as putting a new expiry timer on the reserved tickets and update the reservation
+    // stauts so the user can decide what to do (eg try paying with a different payment method, if
+    // that flow isn't already handled by the payment processor).
+    // For the purposes of this task, all of the above is out of scope.
+
+    if (paymentStatus === PaymentStatus.Approved) {
+      const [reservation] = await this.dataSource.query<[{ reservation_id: string }]>(
+        `update tickets t
+         set ticket_status_id = 3
+         from reservations r
+         where t.reservation_id = r.id
+           and r.id = $1;
+        `,
+        [reservationId]
+      );
+      return true;
+    } else if (paymentStatus === PaymentStatus.Declined) {
+      // Act accordingly.
+      return false;
+    }
+
+    throw new Error("Assertion error: Unexpected code branch reached. Did PaymentStatus get a new enum member that wasn't handled?");
+  }
+}
+
+enum PaymentStatus {
+  Declined = 0,
+  Approved = 1,
 }
