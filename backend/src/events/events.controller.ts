@@ -42,6 +42,11 @@ export class EventsController {
     return reservation;
   }
 
+  // Out of scope: User cancelling a reservation. This would require an authenticated POST with the reservationId and then
+  // updating the corresponding tables to undo the reservation process, checking first that the reservation had not expired
+  // and therefore confirming the tickets can safely be modified to available (and not accidently adjusting someone else's
+  // reserved tickets).
+
   @Post("payment_webhook")
   async paymentProcessorWebhookCallback(@Body() dto: PaymentWebhookDto) {
     const success = await this.eventsService.process_payment(dto.reservationId, dto.paymentStatus);
