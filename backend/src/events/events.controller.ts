@@ -25,7 +25,7 @@ export class EventsController {
     };
   }
 
-  @Post(":id")
+  @Post(":id/reserve")
   async reserveTickets(@Headers("x-user-id") userId: string | undefined, @Param() params: any, @Body() dto: ReserveTicketsDto): Promise<{ reservation_id: string }> {
     // Simulating an authenticated user.
     // userId would come from a secure cookie or JWT bearer token after authentication.
