@@ -17,7 +17,7 @@ export class EventsService {
 
   async findEvents(): Promise<Event[]> {
     return await this.eventsRepository.find({
-      order: { date: "DESC" }
+      order: { date: "DESC", name: "ASC" }
     });
   }
 
