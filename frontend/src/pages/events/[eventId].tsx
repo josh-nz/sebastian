@@ -57,8 +57,10 @@ export default function ViewEvent() {
 
           <form onSubmit={e => { void buyTickets(e); }}>
             <h2>Buy tickets</h2>
-            <label htmlFor="numberOfTickets">Number of tickets:</label>
-            <input id="numberOfTickets" name="numberOfTickets" type="number"/>
+            <div>
+              <label htmlFor="numberOfTickets">Number of tickets:</label>
+              <input id="numberOfTickets" name="numberOfTickets" type="number"/>
+            </div>
             <button type="submit">Buy now</button>
           </form>
         </>

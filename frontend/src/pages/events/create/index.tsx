@@ -36,12 +36,18 @@ export default function CreateEvent() {
       <Link href="/events">Back to events</Link>
       <h1>Add a new event</h1>
       <form onSubmit={e => { void createEvent(e); }}>
-        <label htmlFor="name">Event name:</label>
-        <input id="name" name="name" type="text" required />
-        <label htmlFor="date">Event date:</label>
-        <input id="date" name="date" type="date" required />
-        <label htmlFor="capacity">Event capacity:</label>
-        <input id="capacity" name="capacity" type="number" required />
+        <div>
+          <label htmlFor="name">Event name:</label>
+          <input id="name" name="name" type="text" required />
+        </div>
+        <div>
+          <label htmlFor="date">Event date:</label>
+          <input id="date" name="date" type="date" required />
+        </div>
+        <div>
+          <label htmlFor="capacity">Event capacity:</label>
+          <input id="capacity" name="capacity" type="number" required />
+        </div>
         <button type="submit">Create event</button>
       </form>
     </>
