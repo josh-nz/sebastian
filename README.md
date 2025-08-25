@@ -4,7 +4,7 @@
 
 The `.tool-versions` file details the software used. [asdf](https://asdf-vm.com/) or [mise](https://mise.jdx.dev/) can install and isolate this software. Otherwise ensure compatible software is available and Postgres is running.
 
-Run `npm install` to install the dependencies.
+Run `npm install` in both the `frontend` and `backend` directories to install the dependencies.
 
 ### Postgres
 
@@ -51,9 +51,9 @@ Confirm payment:
 
 ## A note on concurrency
 
-This application takes a pessimistic approach to concurrency. Since it's known that events sell out, this concurrency model allows the user to be sure that when they start the ticket purchase process, they will get the tickets they have asked for. Conversely, an optimistic concurrency approach means the user finds out only at the end of the ticket purchase process whether they have in fact obtained the requested tickets. Therefore a pessimistic concurrency model provides a better user experience for this application.
+This application takes a pessimistic approach to concurrency. Since it's known that events sell out, this concurrency model allows the user to be sure that when they start the ticket purchase process, they will get the tickets they have requested (subject to reservation expiry). Conversely, an optimistic concurrency approach means the user finds out only at the end of the ticket purchase process whether they have in fact obtained the requested tickets. Therefore a pessimistic concurrency model provides a better user experience for this application.
 
-The pessimistic concurrent model used in this application is based around Postgres row level locks. When a user requests to purchase tickets, a check is done to ensure the number of requested tickets are still available (that is, they are not booked or currently reserved). If this is the case, those rows are locked and a reservation is created for the user and the selected tickets.
+The pessimistic concurrent model used in this application is based around Postgres row level locks. When a user requests to purchase tickets, a check is done to ensure the number of requested tickets are still available—that is, they are not booked or currently reserved. If this is the case, those rows are locked and a reservation is created for the user and the selected tickets.
 
 Postgres doesn't allow multiple commands (which includes explicit transactions) within a prepared statement so this was implemented as a single SQL command so as to leverage an implicit transaction. The row level locks are in place until the end of this transaction, ensuring that other users trying to book these tickets will be blocked until this transaction ends, at which time those users will see those tickets as reserved and therefore not available to them.
 
@@ -61,17 +61,19 @@ The reservation has a time limit of 10 minutes, and if the user has not complete
 
 ## Other notes
 
-There are some comments on other design choices of the application in the relevant parts of the code.
+There are some comments on other design choices of the application in the relevant parts of the code. They can be found reading the code, but are also listed here:
 
-backend/src/events/events.controller.ts lines 37 and 52.
-backend/src/events/events.service.ts lines 25, 59, 101, 139.
+- `backend/src/events/events.controller.ts` lines 37 and 52.
+- `backend/src/events/events.service.ts` lines 25, 59, 101, 139.
 
 
 Things intentionally omitted:
 - Almost all server side and client side validation.
 - Any code doc comments.
 - Better code organisation (eg reservation NestJS module).
-- Tests.
+- Automated testing.
 - Cross site request forgery protection.
 - Solid error handling.
+- Any UI design and styling.
+- Other things as per brief.
 
