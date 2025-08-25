@@ -24,10 +24,9 @@ export default function ListEvents() {
       {isLoading && <div>Loading events…</div>}
       <ul>
         {events.map((ev) => (
-          <li key={ev.id}><Link href={`/events/${ev.id}`}>{ev.name} {ev.date.toString()}</Link></li>
+          <li key={ev.id}><Link href={`/events/${ev.id}`}>{ev.name} {new Date(ev.date).toLocaleDateString()}</Link></li>
         ))}
       </ul>
-
     </>
   );
 }
