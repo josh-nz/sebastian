@@ -100,7 +100,7 @@ export class EventsService {
   async reserveTickets(userId: string, eventId: string, numberOfTickets: number): Promise<{ reservationId: string } | undefined> {
     // Considered out of scope: Possibly prevent a user from making a new reservation while they still have a pending one. A user could tie up all the
     // tickets with temporary reservations by making multiple POSTs. Ie, same user concurrency can be improved.
-    const [reservation] = await this.dataSource.query<[{ reservationId: string }]>(
+    const [reservation] = await this.dataSource.query<[{ reservation_id: string }]>(
       `with available_tickets as materialized (
          select t.id
          from tickets t
@@ -132,7 +132,7 @@ export class EventsService {
       [userId, eventId, numberOfTickets]
     );
 
-    return reservation;
+    return reservation ? { reservationId: reservation.reservation_id } : undefined;
   }
 
   async process_payment(reservationId: string, paymentStatus: PaymentStatus): Promise<boolean> {
