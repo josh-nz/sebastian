@@ -25,7 +25,7 @@ export class EventsController {
     return event;
   }
 
-  @Post()
+  @Post("create")
   async createEvent(@Body() dto: CreateEventDto): Promise<{ eventId: string }> {
     return {
       eventId: await this.eventsService.create(dto)
