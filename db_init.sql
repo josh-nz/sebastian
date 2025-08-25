@@ -4,7 +4,7 @@ create database sebastian;
 \c sebastian;
 
 create table users (
-  id uuid default gen_random_uuid() primary key,
+  id uuid primary key,
   name text not null
 );
 
@@ -40,7 +40,7 @@ values (1, 'available'), (2, 'reserved'), (3, 'booked');
 
 
 -- Seed data:
-insert into users (name) values ('Josh');
+insert into users (id, name) values ('38e61920-9d2e-4467-b6ef-0e38d9868b10', 'Josh');
 
 insert into events (name, date, capacity)
 values ('Jeff Buckley', '2025-10-30', 5);
