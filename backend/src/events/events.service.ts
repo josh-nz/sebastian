@@ -32,21 +32,25 @@ export class EventsService {
     // arise.
 
     const [event] = await this.dataSource.query<any[]>(
-      `select e.name, e.date, count(e.id) as "availableTicketsCount"
-       from events e
-       join tickets t on t.event_id = e.id
-       left join reservations r on r.id = t.reservation_id
-       where e.id = $1
-        and (t.ticket_status_id = 1 or (t.ticket_status_id = 2 and r.expires_at < now()))
-       group by e.id, e.name, e.date;
+      `with ticketCount as (
+         select count(t.id) as availableTicketsCount
+         from tickets t
+         left join reservations r on r.id = t.reservation_id
+         where t.event_id = $1
+           and (t.ticket_status_id = 1 or (t.ticket_status_id = 2 and r.expires_at < now()))
+       )
+       select e.id, e.name, e.date, ticketCount.availableTicketsCount
+       from events e, ticketCount
+       where e.id = $1;
       `,
       [eventId]);
 
     return event ? 
       {
+        id: event.id,
         name: event.name,
         date: new Date(event.date),
-        availableTicketsCount: parseInt(event.availableTicketsCount, 10)
+        availableTicketsCount: parseInt(event.availableticketscount, 10)
       }
       : undefined;
   }
