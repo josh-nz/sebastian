@@ -98,7 +98,7 @@ export class EventsService {
   }
 
   async reserveTickets(userId: string, eventId: string, numberOfTickets: number): Promise<{ reservationId: string } | undefined> {
-    // Out of scope: Possibly prevent a user from making a new reservation while they still have a pending one. A user could tie up all the
+    // Considered out of scope: Possibly prevent a user from making a new reservation while they still have a pending one. A user could tie up all the
     // tickets with temporary reservations by making multiple POSTs. Ie, same user concurrency can be improved.
     const [reservation] = await this.dataSource.query<[{ reservationId: string }]>(
       `with available_tickets as materialized (
@@ -146,7 +146,7 @@ export class EventsService {
     // if not, such as putting a new expiry timer on the reserved tickets and update the reservation
     // stauts so the user can decide what to do (eg try paying with a different payment method, if
     // that flow isn't already handled by the payment processor).
-    // For the purposes of this task, all of the above is out of scope.
+    // For the purposes of this task, all of the above is considered out of scope.
 
     if (paymentStatus === PaymentStatus.Approved) {
       const [reservation] = await this.dataSource.query<[{ reservation_id: string }]>(
