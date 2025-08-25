@@ -22,7 +22,6 @@ export default function CheckoutReservation() {
       method: "POST"
     });
 
-    console.log(resp);
     if (resp.status === 201) {
       alert("Tickets have been booked");
       router.push("/events");
@@ -30,7 +29,7 @@ export default function CheckoutReservation() {
       const { message } = await resp.json();
       alert(message);
     } else {
-      console.log("Unknown error, try again later.");
+      alert("Unknown error, try again later.");
     }
   }
 

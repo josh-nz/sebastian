@@ -27,7 +27,7 @@ export default function CreateEvent() {
       router.push(`/events/${eventId}`);
     }
     else {
-      console.log("Unknown error, try again later.");
+      alert("Unknown error, try again later.");
     }
   }
 
